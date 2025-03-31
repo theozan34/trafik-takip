@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Trafik Takip</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { height: 70%; width: 100%; }
+    .traffic-lights {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 30%;
+      background: #f0f0f0;
+      font-family: sans-serif;
+      padding: 10px;
+    }
+    .light {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      font-weight: bold;
+      color: white;
+      width: 90%;
+      text-align: center;
+    }
+    .green { background: green; }
+    .red { background: red; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="traffic-lights" id="lights"></div>
+
+  <script>
+    let map;
+    const apiKey = "AIzaSyAtn-2Jq4wfqyXu3fx41sHfAeLUMVcbRzM";
+
+    const waypoints = [
+      { location: { lat: 41.072560434239335, lng: 28.810518326082725 } },
+      { location: { lat: 41.06342716216847, lng: 28.803330098085727 } },
+      { location: { lat: 41.061289481556535, lng: 28.800054174075804 } }
+    ];
+
+    const trafficLights = [
+      { id: 1, coord: { lat: 41.07801736250101, lng: 28.80830167241458 } },
+      { id: 2, coord: { lat: 41.06467749160901, lng: 28.804872202019087 } },
+      { id: 3, coord: { lat: 41.06132872999997, lng: 28.803801166521115 } }
+    ];
+
+    function simulateLightStatus(index) {
+      const cycle = 90;
+      const greenDuration = 50;
+      const now = Math.floor((Date.now() / 1000 + index * 15) % cycle);
+      return now < greenDuration ? "green" : "red";
+    }
+
+    function updateLights() {
+      const container = document.getElementById("lights");
+      container.innerHTML = "";
+      trafficLights.forEach((light, i) => {
+        const status = simulateLightStatus(i);
+        const div = document.createElement("div");
+        div.className = `light ${status}`;
+        div.innerText = `Trafik Işığı ${light.id}: Şu an ${status === "green" ? "YEŞİL" : "KIRMIZI"}`;
+        container.appendChild(div);
+      });
+    }
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 41.070, lng: 28.805 },
+        zoom: 14,
+        mapTypeId: "roadmap"
+      });
+
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer({ map });
+
+      directionsService.route({
+        origin: { lat: 41.0805085163238, lng: 28.80680247356587 },
+        destination: { lat: 41.05729814721459, lng: 28.803891990066585 },
+        waypoints: waypoints,
+        optimizeWaypoints: false,
+        travelMode: google.maps.TravelMode.DRIVING,
+        drivingOptions: {
+          departureTime: new Date(),
+          trafficModel: "bestguess"
+        }
+      }, (response, status) => {
+        if (status === "OK") directionsRenderer.setDirections(response);
+        else alert("Yol tarifi alınamadı: " + status);
+      });
+
+      const trafficLayer = new google.maps.TrafficLayer();
+      trafficLayer.setMap(map);
+    }
+
+    updateLights();
+    setInterval(updateLights, 10000);
+  </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtn-2Jq4wfqyXu3fx41sHfAeLUMVcbRzM&callback=initMap"></script>
+</body>
+</html>
