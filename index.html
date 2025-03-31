@@ -5,8 +5,20 @@
   <title>Trafik Takip</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background-color: #f4f4f4; }
-    #map { height: 38%; width: 100%; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+    }
+    #map {
+      height: 38%;
+      width: 90%;
+      margin: 0 auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
     .info-panel {
       height: 62%;
       padding: 10px;
@@ -60,6 +72,7 @@
 
   <script>
     let map;
+
     const trafficLights = [
       { id: 1, name: "Dolapdere Işıklar", cycle: 90, green: 50 },
       { id: 2, name: "Demirciler Işıklar", cycle: 90, green: 50 },
@@ -123,14 +136,24 @@
           trafficModel: "bestguess"
         }
       }, (response, status) => {
+        const etaEl = document.getElementById("eta");
         if (status === "OK") {
           directionsRenderer.setDirections(response);
-          const duration = response.routes[0].legs.reduce((total, leg) => total + leg.duration_in_traffic.value, 0);
-          const minutes = Math.floor(duration / 60);
-          const seconds = duration % 60;
-          document.getElementById("eta").innerText = `Tahmini varış süresi: ${minutes} dakika ${seconds} saniye`;
+          try {
+            const duration = response.routes[0].legs.reduce((total, leg) =>
+              total + (leg.duration_in_traffic?.value || leg.duration?.value || 0), 0);
+            if (duration > 0) {
+              const minutes = Math.floor(duration / 60);
+              const seconds = duration % 60;
+              etaEl.innerText = `Tahmini varış süresi: ${minutes} dakika ${seconds} saniye`;
+            } else {
+              etaEl.innerText = "Tahmini süre verisi alınamadı.";
+            }
+          } catch (e) {
+            etaEl.innerText = "Tahmini süre hesaplanamadı.";
+          }
         } else {
-          document.getElementById("eta").innerText = "Tahmini süre alınamadı.";
+          etaEl.innerText = "Yol tarifi alınamadı.";
         }
       });
 
