@@ -1,41 +1,52 @@
+
 <!DOCTYPE html>
 <html>
 <head>
   <title>Trafik Takip</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
-    #map { height: 70%; width: 100%; }
-    .traffic-lights {
+    html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background-color: #f9f9f9; }
+    #map { height: 50%; width: 100%; }
+    .info-panel {
+      height: 50%;
+      padding: 10px;
+      box-sizing: border-box;
+      background-color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 30%;
-      background: #f0f0f0;
-      font-family: sans-serif;
-      padding: 10px;
+      justify-content: flex-start;
+      border-top: 1px solid #ccc;
+    }
+    .eta {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
     }
     .light {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 8px;
-      font-weight: bold;
+      padding: 6px 10px;
+      margin: 5px 0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
       color: white;
       width: 90%;
       text-align: center;
     }
-    .green { background: green; }
-    .red { background: red; }
+    .green { background-color: #4CAF50; }
+    .red { background-color: #F44336; }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <div class="traffic-lights" id="lights"></div>
+  <div class="info-panel">
+    <div class="eta" id="eta">Tahmini varış süresi hesaplanıyor...</div>
+    <div id="lights"></div>
+  </div>
 
   <script>
     let map;
-    const apiKey = "AIzaSyAtn-2Jq4wfqyXu3fx41sHfAeLUMVcbRzM";
 
     const waypoints = [
       { location: { lat: 41.072560434239335, lng: 28.810518326082725 } },
@@ -63,7 +74,7 @@
         const status = simulateLightStatus(i);
         const div = document.createElement("div");
         div.className = `light ${status}`;
-        div.innerText = `Trafik Işığı ${light.id}: Şu an ${status === "green" ? "YEŞİL" : "KIRMIZI"}`;
+        div.innerText = `Trafik Işığı ${light.id}: ${status === "green" ? "YEŞİL" : "KIRMIZI"}`;
         container.appendChild(div);
       });
     }
@@ -76,7 +87,15 @@
       });
 
       const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer({ map });
+      const directionsRenderer = new google.maps.DirectionsRenderer({ 
+        map, 
+        suppressMarkers: false,
+        polylineOptions: {
+          strokeColor: '#1a73e8',
+          strokeOpacity: 0.9,
+          strokeWeight: 6
+        }
+      });
 
       directionsService.route({
         origin: { lat: 41.0805085163238, lng: 28.80680247356587 },
@@ -89,8 +108,14 @@
           trafficModel: "bestguess"
         }
       }, (response, status) => {
-        if (status === "OK") directionsRenderer.setDirections(response);
-        else alert("Yol tarifi alınamadı: " + status);
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const duration = response.routes[0].legs.reduce((total, leg) => total + leg.duration_in_traffic.value, 0);
+          const eta = Math.round(duration / 60);
+          document.getElementById("eta").innerText = `Tahmini varış süresi: ${eta} dakika`;
+        } else {
+          document.getElementById("eta").innerText = "Yol tarifi alınamadı.";
+        }
       });
 
       const trafficLayer = new google.maps.TrafficLayer();
