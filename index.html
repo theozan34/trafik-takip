@@ -57,7 +57,7 @@
         optimizeWaypoints: false,
         travelMode: google.maps.TravelMode.DRIVING,
         drivingOptions: {
-          departureTime: new Date(),
+          departureTime: new Date(Date.now() + 5 * 60000),
           trafficModel: "bestguess"
         }
       }, (response, status) => {
